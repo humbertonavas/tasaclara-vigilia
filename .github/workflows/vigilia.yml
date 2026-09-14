@@ -10,7 +10,9 @@ name: Vigilia de Tasa Clara
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    # Minutos «no redondos»: GitHub retrasa o salta los programados en los
+    # minutos de más carga (:00, :10…), según su propia documentación.
+    - cron: '3,13,23,33,43,53 * * * *'
     # Latido mensual: GitHub apaga los programados de un repo público tras
     # 60 días sin actividad; un commit al mes lo mantiene encendido.
     - cron: '17 12 1 * *'
