@@ -1,4 +1,4 @@
-# Vigilia externa de Tasa Clara (https://tasaclara.socialwebseo.com)
+# Vigilia externa de Tasa Pana, antes Tasa Clara (https://tasapana.socialwebseo.com)
 #
 # Las tasas se actualizan con un cron del hosting cada cinco minutos, y el
 # propio sitio trae un vigilante (/push/salud.php) que repara el cron y relanza
@@ -6,7 +6,7 @@
 # visita. Esta vigilia lo despierta cada diez minutos desde fuera del hosting,
 # haya visitas o no, y avisa por correo (una ejecución fallida de GitHub) si las
 # tasas llevan más de 30 minutos sin actualizarse.
-name: Vigilia de Tasa Clara
+name: Vigilia de Tasa Pana
 
 on:
   schedule:
@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          SITIO='https://tasaclara.socialwebseo.com'
+          SITIO='https://tasapana.socialwebseo.com'
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36'
           R=''
           for intento in 1 2 3; do
@@ -61,7 +61,7 @@ jobs:
             R2=$(curl -s --max-time 30 -A "$UA" "$SITIO/push/salud.php" || true)
             EDAD=$(echo "$R2" | jq -r '.tasasEdadMin // 999' 2>/dev/null || echo 999)
             if [ "$EDAD" -gt 30 ]; then
-              echo "::error::Las tasas de Tasa Clara llevan $EDAD minutos sin actualizarse (cron: $CRON, ingesta: $INGESTA)."
+              echo "::error::Las tasas de Tasa Pana llevan $EDAD minutos sin actualizarse (cron: $CRON, ingesta: $INGESTA)."
               exit 1
             fi
           fi

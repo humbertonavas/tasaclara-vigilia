@@ -1,7 +1,7 @@
-# Vigilia de Tasa Clara
+# Vigilia de Tasa Pana
 
-Vigilancia externa de [Tasa Clara](https://tasaclara.socialwebseo.com), la app informativa y gratuita de
-tasas de cambio en Venezuela.
+Vigilancia externa de [Tasa Pana](https://tasapana.socialwebseo.com) (antes Tasa Clara), la app
+informativa y gratuita de tasas de cambio en Venezuela.
 
 Cada 10 minutos, este repositorio llama al vigilante del sitio (`/push/salud.php`), que:
 
