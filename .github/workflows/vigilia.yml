@@ -1,4 +1,4 @@
-# Vigilia externa de Tasa Pana, antes Tasa Clara (https://tasapana.socialwebseo.com)
+# Vigilia externa de Tasa Pana, antes Tasa Clara (https://tasapana.com)
 #
 # Las tasas se actualizan con un cron del hosting cada cinco minutos, y el
 # propio sitio trae un vigilante (/push/salud.php) que repara el cron y relanza
@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          SITIO='https://tasapana.socialwebseo.com'
+          SITIO='https://tasapana.com'
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36'
           R=''
           for intento in 1 2 3; do
