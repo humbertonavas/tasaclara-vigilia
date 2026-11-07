@@ -29,7 +29,7 @@ jobs:
   vigilar:
     if: github.event.schedule != '17 12 1 * *'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - name: Despertar al vigilante y comprobar que las tasas están al día
         shell: bash
@@ -37,16 +37,26 @@ jobs:
           set -uo pipefail
           SITIO='https://tasapana.com'
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36'
+          # El firewall del hosting (Imunify360) a veces frena unos minutos la IP
+          # del runner de GitHub: eso no es una caída. Antes de dar la alarma se
+          # reintenta con esperas crecientes (≈ 8 min en total); una caída real
+          # se sigue avisando, solo que unos minutos más tarde.
           R=''
-          for intento in 1 2 3; do
-            R=$(curl -s --max-time 30 -A "$UA" -H 'Accept: application/json' "$SITIO/push/salud.php" || true)
+          ESPERAS=(20 40 60 90 120 0)
+          for intento in 1 2 3 4 5 6; do
+            R=$(curl -s --connect-timeout 15 --max-time 30 -A "$UA" -H 'Accept: application/json' "$SITIO/push/salud.php" || true)
             if echo "$R" | jq -e '.tasasEdadMin' > /dev/null 2>&1; then break; fi
-            echo "intento $intento sin respuesta válida; se reintenta"
             R=''
-            sleep 20
+            ESPERA=${ESPERAS[$((intento - 1))]}
+            if [ "$ESPERA" -gt 0 ]; then
+              echo "intento $intento sin respuesta válida; se reintenta en $ESPERA s"
+              sleep "$ESPERA"
+            else
+              echo "intento $intento sin respuesta válida"
+            fi
           done
           if [ -z "$R" ]; then
-            echo "::error::El vigilante del sitio no respondió en tres intentos."
+            echo "::error::El vigilante del sitio no respondió en seis intentos (≈ 8 minutos)."
             exit 1
           fi
           echo "$R" | jq .
