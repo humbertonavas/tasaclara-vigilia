@@ -59,17 +59,26 @@ jobs:
             echo "::error::El vigilante del sitio no respondió en seis intentos (≈ 8 minutos)."
             exit 1
           fi
+          # Cualquier cosa que no sea un entero (respuesta vacía, «null», texto)
+          # cuenta como 999 minutos: la ausencia de dato NUNCA es «al día». Antes,
+          # una segunda respuesta vacía dejaba EDAD="" y `[ "" -gt 30 ]` fallaba
+          # en silencio: la vigilia terminaba en verde con las tasas vencidas.
+          entero() { case "$1" in ''|*[!0-9]*) echo 999 ;; *) echo "$1" ;; esac; }
           echo "$R" | jq .
-          EDAD=$(echo "$R" | jq -r '.tasasEdadMin // 999')
+          EDAD=$(entero "$(echo "$R" | jq -r '.tasasEdadMin // 999' 2>/dev/null)")
           CRON=$(echo "$R" | jq -r '.cron // "?"')
           INGESTA=$(echo "$R" | jq -r '.ingesta // "?"')
-          DIVISAS=$(echo "$R" | jq -r '.divisasEdadMin // 999')
+          DIVISAS=$(entero "$(echo "$R" | jq -r '.divisasEdadMin // 999' 2>/dev/null)")
           echo "Tasas de hace $EDAD min · divisas del mundo de hace $DIVISAS min · cron: $CRON · ingesta: $INGESTA"
-          if [ "$EDAD" -gt 30 ]; then
-            # Si el vigilante acaba de pedir la actualización, se le da un minuto.
+          if [ "$EDAD" -gt 30 ] || [ "$DIVISAS" -gt 360 ]; then
+            # Si el vigilante acaba de pedir la actualización, se le da un minuto,
+            # y se vuelven a leer LAS DOS edades (antes las divisas se quedaban con
+            # la primera lectura y daban rojo aunque ya se hubieran recuperado).
             sleep 60
-            R2=$(curl -s --max-time 30 -A "$UA" "$SITIO/push/salud.php" || true)
-            EDAD=$(echo "$R2" | jq -r '.tasasEdadMin // 999' 2>/dev/null || echo 999)
+            R2=$(curl -s --connect-timeout 15 --max-time 30 -A "$UA" -H 'Accept: application/json' "$SITIO/push/salud.php" || true)
+            EDAD=$(entero "$(echo "$R2" | jq -r '.tasasEdadMin // 999' 2>/dev/null)")
+            DIVISAS=$(entero "$(echo "$R2" | jq -r '.divisasEdadMin // 999' 2>/dev/null)")
+            echo "Segunda lectura: tasas de hace $EDAD min · divisas de hace $DIVISAS min"
             if [ "$EDAD" -gt 30 ]; then
               echo "::error::Las tasas de Tasa Pana llevan $EDAD minutos sin actualizarse (cron: $CRON, ingesta: $INGESTA)."
               exit 1
